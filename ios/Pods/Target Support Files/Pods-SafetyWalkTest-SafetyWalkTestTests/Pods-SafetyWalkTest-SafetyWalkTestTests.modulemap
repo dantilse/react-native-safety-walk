@@ -1,0 +1,6 @@
+module Pods_SafetyWalkTest_SafetyWalkTestTests {
+  umbrella header "Pods-SafetyWalkTest-SafetyWalkTestTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
