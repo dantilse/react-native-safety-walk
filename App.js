@@ -1,38 +1,95 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
 import React from 'react';
-import {SafeAreaView, StyleSheet, View, Text} from 'react-native';
+import {
+  Alert,
+  SafeAreaView,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import NfcManager, { NfcEvents } from 'react-native-nfc-manager';
 
-// import {
-//   Header,
-//   LearnMoreLinks,
-//   Colors,
-//   DebugInstructions,
-//   ReloadInstructions,
-// } from 'react-native/Libraries/NewAppScreen';
+const HandleTest = () => {
+  if (NfcManager.isSupported('super')) {
+    return <Text>Supported</Text>;
+  } else {
+    return <Text>Not supported</Text>;
+  }
+};
 
-const App = () => (
-  <SafeAreaView style={styles.header}>
-    <View>
-      <Text style={styles.heading}>Welcome</Text>
-    </View>
-  </SafeAreaView>
-);
+class App extends React.Component {
+  componentDidMount() {
+    console.log('before start');
+    NfcManager.start().catch((error) => console.error('start error', error));
+    NfcManager.setEventListener(NfcEvents.DiscoverTag, (tag) => {
+      NfcManager.setAlertMessageIOS('I got your tag!');
+      NfcManager.unregisterTagEvent().catch(() => 0);
+    });
+    NfcManager.isSupported()
+      .then((supported) => {
+        if (supported) {
+          this._startNfc();
+        }
+      })
+      .catch((error) => console.error('isSupported error: ', error));
+  }
+
+  componentWillUnmount() {
+    NfcManager.setEventListener(NfcEvents.DiscoverTag, null);
+    NfcManager.unregisterTagEvent().catch(() => 0);
+  }
+
+  render() {
+    return (
+      <SafeAreaView>
+        <View style={styles.container}>
+          <Text>NFC Demo</Text>
+          <HandleTest />
+          <TouchableOpacity style={styles.buttonStart} onPress={this._test}>
+            <Text>Test</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.buttonCancel} onPress={this._cancel}>
+            <Text>Cancel Test</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  _cancel = () => {
+    NfcManager.unregisterTagEvent().catch(() => 0);
+  };
+
+  _test = async () => {
+    try {
+      await NfcManager.registerTagEvent()
+        .then(Alert.alert('start'))
+        .catch((error) => console.error(error));
+    } catch (ex) {
+      console.warn('ex', ex);
+      NfcManager.unregisterTagEvent().catch(() => 0);
+    }
+  };
+}
 
 const styles = StyleSheet.create({
-  heading: {
-    fontWeight: 'bold',
-    fontSize: 30,
+  container: {
+    padding: 20,
   },
-  header: {
-    marginVertical: 15,
-    alignItems: 'center',
+  buttonStart: {
+    padding: 10,
+    width: 200,
+    margin: 20,
+    borderWidth: 1,
+    borderColor: 'black',
+  },
+  buttonCancel: {
+    padding: 10,
+    width: 200,
+    margin: 20,
+    borderWidth: 1,
+    borderColor: 'black',
   },
 });
 
